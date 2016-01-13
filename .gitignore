@@ -1,1 +1,3 @@
-*.o
+_site
+.sass-cache
+

@@ -1,0 +1,12 @@
+title: NES Development Tutorial
+email: tim@timcheeseman.com
+description: >
+  NES Development Tutorial
+baseurl: "/nesdev/"
+url: "http://timcheeseman.com"
+github_username: cirla
+
+encoding: utf-8
+markdown: kramdown
+timezone: American/New_York
+
