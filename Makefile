@@ -12,6 +12,6 @@ clean:
 	rm -f ./*.o
 	rm -f ./$(NAME).nes
 
-play: build
+play: $(NAME).nes
 	$(EMULATOR) $(NAME).nes
 
