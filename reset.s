@@ -3,7 +3,7 @@
 .import _main
 .export __STARTUP__:absolute=1
 
-; linker generated symbols
+; linker-generated symbols
 
 .import __STACK_START__, __STACK_SIZE__
 .include "zeropage.inc"
@@ -70,9 +70,10 @@ start:
     bpl @vblank_wait_1
 
     ; We now have about 30,000 cycles to burn before the PPU stabilizes.
-    ; One thing we can do with this time is put RAM in a known state.
-    ; Here we fill it with $00, which matches what a C compiler expects
-    ; for BSS. Conveniently, X is still 0.
+
+    stx APU_STATUS ; disable music channels
+
+    ; We'll fill RAM with $00.
     txa
 @clear_ram:
     sta $00,   x
@@ -85,7 +86,7 @@ start:
 
     ; We skipped $0200, x on purpose. Usually, RAM page 2 is used for the
     ; display list to be copied to OAM. OAM needs to be initialized to
-    ; $ef-$ff, not 0, or you'll get a bunch of garbage sprites at (0, 0).
+    ; $ef-$ff, not 0, or we'll get a bunch of garbage sprites at (0, 0).
 
     inx
     bne @clear_ram
@@ -102,8 +103,6 @@ start:
 	inx
 	bne @clear_oam
 
-    stx APU_STATUS ; disable music channels
-
     ; Second of two waits for vertical blank to make sure that the
     ; PPU has stabilized
 @vblank_wait_2:
@@ -115,15 +114,15 @@ start:
     lda #$02 ; use page $0200-$02ff
     sta OAM_DMA
 
-	lda PPU_STATUS ; reset the PPU latch
-
     ; set the C stack pointer
     lda #<(__STACK_START__ + __STACK_SIZE__)
     sta sp
     lda #>(__STACK_START__+__STACK_SIZE__)
     sta sp+1
 
-    jmp _main        ;jumps to main in c code
+	lda PPU_STATUS ; reset the PPU latch
+
+    jmp _main ; call into our C main()
 
 ; do nothing for interrupts
 nmi:

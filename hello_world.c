@@ -53,7 +53,7 @@ void main(void) {
         PPU_DATA = TEXT[i];
     }
 
-    // reset scroll
+    // reset scroll location to top-left of screen
     PPU_SCROLL = 0x00;
     PPU_SCROLL = 0x00;
 
@@ -61,6 +61,7 @@ void main(void) {
     PPU_CTRL = 0x80;
     PPU_MASK = 0x1e;
 
+    // infinite loop
     while (1) {};
 };
 
