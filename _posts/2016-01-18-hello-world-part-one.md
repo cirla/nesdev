@@ -16,7 +16,7 @@ It doesn't seem like much, but just getting to this point requires a decent amou
 
 ## The C Code
 
-The best place to start is probably [hello_world.c]({{ "/hello_world.c" | prepend: branch_url }}), where the code that actually produces our "Hello, World!" screen lives.
+The best place to start is probably [hello_world.c]({{ "/hello_world.c" | prepend: branch_url }}), where the code that actually produces our "Hello, World!" screen lives. You can find the full source for this lesson [on Github]({{ branch_url }}).
 
 The first thing you'll notice is the list of `#define`s all beginning with `PPU_`:
 
@@ -128,21 +128,26 @@ for ( i = 0; i < sizeof(TEXT); ++i ) {
 Looking at the [PPU memory map](http://wiki.nesdev.com/w/index.php/PPU_memory_map), you'll see that the address we're writing to is located in the `0x2000`-`0x23FF` range designated for Nametable 0.
 A [nametable](http://wiki.nesdev.com/w/index.php/PPU_nametables) is a 1 KiB chunk of memory that represents the background.
 There are four such nametables addressable by the PPU and we can switch between them using a flag in `PPU_CTRL` (our startup code initialized this to Nametable 0).
-You may have noticed that there are four 1 KiB nametables but only 2 KiB of VRAM; two of them are just mirrors of the other two (whether mirroring is horizontal or vertical can be configured; we'll look at this when we get to scrolling backgrounds) unless additional VRAM is provided on the cartridge.
+You may have noticed that there are four 1 KiB nametables but only 2 KiB of VRAM; two of them are just [mirrors](http://wiki.nesdev.com/w/index.php/Mirroring) of the other two (whether mirroring is horizontal or vertical can be configured; we'll look at this when we get to scrolling backgrounds) unless additional VRAM is provided on the cartridge.
 
-**TODO: image of nametables laid out in VRAM**
+![Horizontal Mirroring]({{site.baseurl}}/images/hello_world/horizontal_mirroring.png)
+*Horizontal mirroring.
+Source: [NES Dev Wiki](http://wiki.nesdev.com/w/index.php/File:Horizontal_mirroring_diagram.png)*
 
 Each of the first 960 bytes in the nametable represent which 8px × 8px tile in the pattern table (we'll talk about these soon) to display in that 8px × 8px area of the screen.
 The background is composed of 30 rows, each with 32 tiles.
 The remaining 64 bytes in the nametable make up the [attribute table](http://wiki.nesdev.com/w/index.php/PPU_attribute_tables), which specifies which palettes are used for each 16px × 16px area of the screen.
 
-**TODO: image of layout within nametable**
+![Nametable]({{site.baseurl}}/images/hello_world/nametable.png)
+*Our nametable after loading data into the PPU.
+We can see both the 8x8 tile grid and the 16x16 attribute grid.*
 
 By writing to address `0x21ca`, we're writing into Nametable 0 with an offset of `0x1ca` (the 458th tile, i.e. row 14 column 10), which will center our "Hello, World!" text on the screen.
 What we are actually writing to `PPU_DATA` here one byte at a time are offsets into the pattern table, which we've conveniently created to store the tiles making up our font in offets corresponding to the [ASCII value](https://en.wikipedia.org/wiki/ASCII#ASCII_printable_code_chart) they represent (e.g. the tile representing the letter `A` is stored at offset `0x41`).
 
-**TODO: image of pattern table**
-*Notice that tile 0 is a blank tile, which makes up the majority of our background.*
+![Pattern Table]({{site.baseurl}}/images/hello_world/pattern_table.png)
+*Our pattern table.
+Notice that tile 0 is a blank tile, which makes up the majority of our background.*
 
 Before turning rendering back on, we have to tell the PPU which pixel of the nametable should be at the top-left corner of the screen.
 This is done by writing first the horizontal offset followed by the vertical offset to the `PPU_SCROLL` register.
