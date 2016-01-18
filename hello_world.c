@@ -7,6 +7,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+// define PPU register aliases
 #define PPU_CTRL    *((uint8_t*)0x2000)
 #define PPU_MASK    *((uint8_t*)0x2001)
 #define PPU_STATUS  *((uint8_t*)0x2002)
@@ -14,6 +15,7 @@
 #define PPU_ADDRESS *((uint8_t*)0x2006)
 #define PPU_DATA    *((uint8_t*)0x2007)
 
+// define palette color aliases
 #define COLOR_BLACK 0x0f
 #define COLOR_WHITE 0x20
 
@@ -21,14 +23,12 @@
 size_t i;
 #pragma bss-name(pop)
 
-#pragma bss-name(push, "RAM")
 const char TEXT[] = "Hello, World!";
 
 const uint8_t PALETTE[] = {
     COLOR_BLACK,                           // background color
     COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, // background palette 0
 };
-#pragma bss-name(pop)
 
 /**
  * main() will be called at the end of the initialization code in reset.s.
@@ -50,7 +50,7 @@ void main(void) {
     PPU_ADDRESS = 0x21;
     PPU_ADDRESS = 0xca;
     for ( i = 0; i < sizeof(TEXT); ++i ) {
-        PPU_DATA = TEXT[i];
+        PPU_DATA = (uint8_t) TEXT[i];
     }
 
     // reset scroll location to top-left of screen
