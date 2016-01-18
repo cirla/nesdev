@@ -1,5 +1,5 @@
 ---
-title: Hello, World!
+title: "&ldquo;Hello, World!&rdquo; Part One"
 layout: post
 git_branch: hello_world
 ---
@@ -43,6 +43,8 @@ Next, we have a few definitions for [color values](http://wiki.nesdev.com/w/inde
 The PPU is capable of a limited set of pre-defined colors which can be combined in palettes and assigned to sprites.
 Each color can be represented in a single byte, hence the term "8-bit graphics."
 
+### Setting up our data
+
 Next, we're defining a few variables, but there are a few things to explain.
 First, the `#pragma bss-name` is a pragma provided by [cc65](http://cc65.github.io/cc65/), the C compiler we're using to target the [6502 CPU](http://wiki.nesdev.com/w/index.php/CPU) in the NES.
 What [the pragma](http://cc65.github.io/doc/cc65.html#ss7.1) does is allow us to specify where in memory we want variables to be defined.
@@ -62,18 +64,17 @@ size_t i;
 
 Why, you may ask, are we defining this globally instead of using a local stack variable?
 Loop counters will be often used and we want to take advantage of the extra speed in using zero page memory (our C stack is not located in the zero page).
+A register would be ideal, but the CPU only has three of those and we want those available to the compiler.
 
-Next up, we're going to define (in a memory section set up in other pages of RAM), the rest of the data we need for this game.
+Next up, we're going to define (in plain old BSS set up in other pages of RAM), the rest of the data we need for this game.
 
 {% highlight c %}
-#pragma bss-name(push, "RAM")
 const char TEXT[] = "Hello, World!";
 
 const uint8_t PALETTE[] = {
     COLOR_BLACK,                           // background color
     COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, // background palette 0
 };
-#pragma bss-name(pop)
 {% endhighlight %}
 
 First is the text that we want to display on the screen.
@@ -82,8 +83,10 @@ Simple enough.
 Next, we're going to define a palette to be used to render the background.
 Palette data has to be in a [specific format](http://wiki.nesdev.com/w/index.php/PPU_palettes#Memory_Map) expected by the PPU.
 Aside from a universal background color (we're using black), we can define up to four different background palettes (we only need one), each with three colors (again, we only need one&mdash;white).
-Each 16x16 pixel area of the background will be associated with a background palette and can make use of its three colors in addition to the background color.
+Each 16px × 16px area of the background will be associated with a background palette and can make use of its three colors in addition to the background color.
 As we're creating a very simple background and not using any sprites, we're only worried about a single background palette.
+
+### Into the void
 
 Now that we have all the data set up, let's move on to our `main()`:
 
@@ -118,14 +121,14 @@ Now that the palette information is copied over to the PPU, we'll move on to the
 PPU_ADDRESS = 0x21;
 PPU_ADDRESS = 0xca;
 for ( i = 0; i < sizeof(TEXT); ++i ) {
-    PPU_DATA = TEXT[i];
+    PPU_DATA = (uint8_t) TEXT[i];
 }
 {% endhighlight %}
 
 Looking at the [PPU memory map](http://wiki.nesdev.com/w/index.php/PPU_memory_map), you'll see that the address we're writing to is located in the `0x2000`-`0x23FF` range designated for Nametable 0.
 A [nametable](http://wiki.nesdev.com/w/index.php/PPU_nametables) is a 1 KiB chunk of memory that represents the background.
 There are four such nametables addressable by the PPU and we can switch between them using a flag in `PPU_CTRL` (our startup code initialized this to Nametable 0).
-You may have noticed that there are four 1 KiB nametables but only 2 KiB of VRAM; two of them are just mirrors of the other two (whether mirroring is horizontal or vertical can be configured, though it doesn't really matter until we get to scrolling backgrounds) unless additional VRAM is provided on the cartridge.
+You may have noticed that there are four 1 KiB nametables but only 2 KiB of VRAM; two of them are just mirrors of the other two (whether mirroring is horizontal or vertical can be configured; we'll look at this when we get to scrolling backgrounds) unless additional VRAM is provided on the cartridge.
 
 **TODO: image of nametables laid out in VRAM**
 
@@ -139,20 +142,29 @@ By writing to address `0x21ca`, we're writing into Nametable 0 with an offset of
 What we are actually writing to `PPU_DATA` here one byte at a time are offsets into the pattern table, which we've conveniently created to store the tiles making up our font in offets corresponding to the [ASCII value](https://en.wikipedia.org/wiki/ASCII#ASCII_printable_code_chart) they represent (e.g. the tile representing the letter `A` is stored at offset `0x41`).
 
 **TODO: image of pattern table**
+*Notice that tile 0 is a blank tile, which makes up the majority of our background.*
 
-Notice that tile 0 is a blank tile, which makes up the majority of our background.
+Before turning rendering back on, we have to tell the PPU which pixel of the nametable should be at the top-left corner of the screen.
+This is done by writing first the horizontal offset followed by the vertical offset to the `PPU_SCROLL` register.
+We want to start from the beginning of the nametable, so we'll set both to zero.
 
-**TODO: PPU SCROLL**
 {% highlight c %}
 PPU_SCROLL = 0x00;
 PPU_SCROLL = 0x00;
 {% endhighlight %}
 
-**TODO: PPU CTRL/MASK**
+Now it's time to tell the PPU to start rendering. First, we'll write the byte `0x80` to `PPU_CTRL`.
+It's easier to understand what's going here if we look at that byte in it's binary form: `0b10000000`.
+There's actually a lot going on in this one byte; [each of those bits has a purpose](http://wiki.nesdev.com/w/index.php/PPU_registers#Controller_.28.242000.29_.3E_write).
+The relevant bits for now are that we're telling the PPU to use Pattern Table 0 and Nametable 0.
+
 {% highlight c %}
 PPU_CTRL = 0x80;
 PPU_MASK = 0x1e;
 {% endhighlight %}
+
+The last thing we have to do is set the [PPU mask](http://wiki.nesdev.com/w/index.php/PPU_registers#Mask_.28.242001.29_.3E_write).
+We're setting a value of `0x1e`, or `0b00011110`, which tells the PPU to render all backgrounds and sprites and to render them in color.
 
 Our work being done, we command the CPU to spin forever as we bask in the glory of our creation.
 
@@ -160,11 +172,7 @@ Our work being done, we command the CPU to spin forever as we bask in the glory 
 while (1) {};
 {% endhighlight %}
 
-## Memory Layout
+## Next Time
 
-**TODO: memory layouts in loader config file**
-
-## Initialization Code
-
-**TODO: init code in reset.s**
+In the next post, "Hello, World!" Part 2, we'll look at how we lay out memory addresses in our code, how to initialize the NES, and how to build all of our code into a complete ROM.
 
