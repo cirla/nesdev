@@ -16,7 +16,7 @@ It doesn't seem like much, but just getting to this point requires a decent amou
 
 ## The C Code
 
-The best place to start is probably [hello_world.c]({{ "/hello_world.c" | prepend: branch_url }}), where the code that actually produces our "Hello, World!" screen lives. You can find the full source for this lesson [on Github]({{ branch_url }}).
+The best place to start is probably [hello_world.c]({{ branch_url }}/hello_world.c), where the code that actually produces our "Hello, World!" screen lives. You can find the full source for this lesson [on Github]({{ branch_url }}).
 
 The first thing you'll notice is the list of `#define`s all beginning with `PPU_`:
 
