@@ -22,7 +22,7 @@ ld65 -C hello_world.cfg -o hello_world.nes reset.o hello_world.o nes.lib
 
 The first command invokes [cc65](http://cc65.github.io/doc/cc65.html), a C compiler, to compile our C code into 6502 assembly.
 The flag `-Oi` tells the compiler to optimize the generated code and to inline more aggressively, as we want to avoid making slow function calls.
-The flag `--add-source` includes our original C source as comments in the resulting assembly code so we can poke around if we're curious.
+The flag `--add-source` includes our original C source as comments in the resulting assembly code (hello_world.s) so we can poke around if we're curious.
 
 Next, we invoke [ca65](http://cc65.github.io/doc/ca65.html), a 6502 assembler, to assemble the output from `cc65` and our [NES startup code]({{ branch_url }}/reset.s) into [object files](https://en.wikipedia.org/wiki/Object_file) (6502 CPU machine code, though not yet executable).
 
@@ -142,6 +142,20 @@ __STACK_SIZE__:  type = weak, value = $100;
 We're going to have the stack take up the second page of RAM (i.e. the 256 bytes starting at address `0x0100`).
 
 ## Startup Code
+
+The last piece of the puzzle is our [scary assembly file]({{ branch_url }}/reset.s) that contains the NES startup code.
+We won't explore this in great depth, but the file is liberally commented for the curious.
+
+After importing a few symbols such as our C `main` function (notice the `_` prepended by the C compiler) which we'll need to call into, we define a few aliases for memory-mapped registers and plop our iNES header into the `HEADER` segment.
+
+The `start` label is where we'll point our `reset` interrupt handler, and it contains a bunch of assembly code to get the NES into a known state (e.g. all interrupts disabled, rendering off, sound off, RAM zeroed, all sprites off-screen, PPU stabilized).
+You'll see at the very end of this label we make use of our `__STACK_START__` and `__STACK_SIZE__` symbols to set up the C stack pointer before calling into our C `main` with `jmp _main`.
+
+The remainder of the `STARTUP` section is defining the other two interrupt handlers which for now do nothing but `rti`&mdash;*return from interrupt*.
+
+Finally, we set the addresses of our interrupt handlers in the `VECTORS` segment and include our pattern tables (via `.incbin`, which tells the assembler to load the "sprites.chr" file as-is and not to assemble it) into the `CHARS` segment.
+
+That's it! We've covered everything that goes into making a simple NES ROM from scratch.
 
 ## Next Time
 

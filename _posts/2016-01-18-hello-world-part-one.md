@@ -179,5 +179,5 @@ while (1) {};
 
 ## Next Time
 
-In the next post, "Hello, World!" Part 2, we'll look at how we lay out memory addresses in our code, how to initialize the NES, and how to build all of our code into a complete ROM.
+In the next post, ["Hello, World!" Part 2]({{ site.baseurl }}{% post_url 2016-01-22-hello-world-part-two %}), we'll look at how we lay out memory addresses in our code, how to initialize the NES, and how to build all of our code into a complete ROM.
 
