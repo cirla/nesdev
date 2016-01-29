@@ -2,6 +2,7 @@
 
 .import _main
 .export __STARTUP__:absolute=1
+.exportzp _FrameCount
 
 ; linker-generated symbols
 
@@ -20,7 +21,7 @@ APU_FRAME_CTR = $4017
 
 .segment "ZEROPAGE"
 
-; no variables
+_FrameCount: .res 1
 
 .segment "HEADER"
 
@@ -91,17 +92,17 @@ start:
     inx
     bne @clear_ram
 
-	; Initialize OAM data in $0200 to have all y coordinates off-screen
-	; (e.g. set every fourth byte starting at $0200 to $ef)
-	lda #$ef
+    ; Initialize OAM data in $0200 to have all y coordinates off-screen
+    ; (e.g. set every fourth byte starting at $0200 to $ef)
+    lda #$ef
 @clear_oam:
-	sta $0200, x
+    sta $0200, x
 
-	inx
     inx
-	inx
-	inx
-	bne @clear_oam
+    inx
+    inx
+    inx
+    bne @clear_oam
 
     ; Second of two waits for vertical blank to make sure that the
     ; PPU has stabilized
@@ -109,7 +110,7 @@ start:
     bit PPU_STATUS
     bpl @vblank_wait_2
 
-	; initialize PPU OAM
+    ; initialize PPU OAM
     stx OAM_ADDRESS ; $00
     lda #$02 ; use page $0200-$02ff
     sta OAM_DMA
@@ -120,12 +121,14 @@ start:
     lda #>(__STACK_START__+__STACK_SIZE__)
     sta sp+1
 
-	lda PPU_STATUS ; reset the PPU latch
+    lda PPU_STATUS ; reset the PPU latch
 
     jmp _main ; call into our C main()
 
-; do nothing for interrupts
 nmi:
+    inc _FrameCount
+    rti
+
 irq:
     rti
 

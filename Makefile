@@ -1,4 +1,4 @@
-NAME = hello_world
+NAME = color_in_motion
 EMULATOR = fceux
 
 build:
