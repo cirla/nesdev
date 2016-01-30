@@ -7,30 +7,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-// define PPU register aliases
-#define PPU_CTRL    *((uint8_t*)0x2000)
-#define PPU_MASK    *((uint8_t*)0x2001)
-#define PPU_STATUS  *((uint8_t*)0x2002)
-#define PPU_SCROLL  *((uint8_t*)0x2005)
-#define PPU_ADDRESS *((uint8_t*)0x2006)
-#define PPU_DATA    *((uint8_t*)0x2007)
-
-// define PPU memory addresses
-#define PPU_PALETTE     0x3f00
-#define PPU_NAMETABLE_0 0x2000
-#define PPU_ATTRIB_0    0x23c0
-
-// define palette color aliases
-#define COLOR_BLACK  0x0f
-#define COLOR_BLUE   0x12
-#define COLOR_GREEN  0x1a
-#define COLOR_RED    0x16
-#define COLOR_WHITE  0x20
-#define COLOR_YELLOW 0x28
-
-// variables defined in assembly
-extern uint8_t FrameCount;
-#pragma zpsym("FrameCount");
+#include "nes.h"
+#include "reset.h"
 
 #pragma bss-name(push, "ZEROPAGE")
 size_t i;
@@ -90,11 +68,6 @@ void main(void) {
         PPU_DATA = PALETTE[i];
     }
 
-    // load the text sprites into the background (nametable 0)
-    // nametable 0 is VRAM $2000-$23ff, so we'll choose an address in the
-    // middle of the screen. The screen can hold a 32x30 grid of 8x8 sprites,
-    // so an offset of 0x1ca (X: 10, Y:14) puts us around the middle vertically
-    // and roughly centers our text horizontally.
     ppu_addr = PPU_NAMETABLE_0 + 0x1ca;
     PPU_ADDRESS = (uint8_t)(ppu_addr >> 8);
     PPU_ADDRESS = (uint8_t)(ppu_addr);
@@ -102,7 +75,7 @@ void main(void) {
         PPU_DATA = (uint8_t) TEXT[i];
     }
 
-    ppu_addr = PPU_ATTRIB_0 + 0x1a;
+    ppu_addr = PPU_ATTRIB_TABLE_0 + 0x1a;
     PPU_ADDRESS = (uint8_t)(ppu_addr >> 8);
     PPU_ADDRESS = (uint8_t)(ppu_addr);
     for ( i = 0; i < 4; ++i ) {
