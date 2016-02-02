@@ -4,7 +4,6 @@
  * http://timcheeseman.com/nesdev/
  */
 
-#include <stddef.h>
 #include <stdint.h>
 
 #define TV_NTSC 1
@@ -12,14 +11,18 @@
 #include "reset.h"
 
 #pragma bss-name(push, "ZEROPAGE")
-size_t i;
-uintptr_t ppu_addr;
-uint8_t attr_offset;
+uint8_t         i;
+
+uintptr_t       ppu_addr;
+uint8_t const * ppu_data;
+uint8_t         ppu_data_size;
+
+uint8_t         attr_offset;
 #pragma bss-name(pop)
 
-const char TEXT[] = "Hello, World!";
+char const TEXT[] = "Hello, World!";
 
-const uint8_t PALETTE[] = {
+uint8_t const PALETTES[] = {
     COLOR_BLUE,         // background color
     0, 0, COLOR_RED,    // background palette 0
     0,                  // ignored
@@ -32,7 +35,7 @@ const uint8_t PALETTE[] = {
 
 #define ATTR_SIZE 4
 #define ATTR_LEN  12
-const uint8_t ATTRIBUTES[] = {
+uint8_t const ATTRIBUTES[] = {
     // layout 1
     0x00, // 00 00 00 00 or 0 0
           //                0 0
@@ -70,54 +73,55 @@ void ResetScroll() {
 }
 
 void EnablePPU() {
-    PPU_CTRL = PPUCTRL_NAMETABLE_0 |
-               PPUCTRL_INC_1_HORIZ |
-               PPUCTRL_SPATTERN_0  |
-               PPUCTRL_BPATTERN_0  |
-               PPUCTRL_SSIZE_8x8   |
-               PPUCTRL_NMI_ON      ;
+    PPU_CTRL = PPUCTRL_NAMETABLE_0 | // use nametable 0
+               PPUCTRL_BPATTERN_0  | // background uses pattern table 0
+               PPUCTRL_NMI_ON      ; // enable NMIs
 
-    PPU_MASK = PPUMASK_COLOR    |
-               PPUMASK_L8_BSHOW |
-               PPUMASK_L8_SSHOW |
-               PPUMASK_BSHOW    |
-               PPUMASK_SSHOW    ;
+    PPU_MASK = PPUMASK_COLOR | // show colors
+               PPUMASK_BSHOW ; // show background
+}
+
+void WritePPU() {
+    PPU_ADDRESS = (uint8_t)(ppu_addr >> 8);
+    PPU_ADDRESS = (uint8_t)(ppu_addr);
+    for ( i = 0; i < ppu_data_size; ++i ) {
+        PPU_DATA = ppu_data[i];
+    }
 }
 
 void main(void) {
-    PPU_ADDRESS = (uint8_t)(PPU_PALETTE >> 8);
-    PPU_ADDRESS = (uint8_t)(PPU_PALETTE);
-    for ( i = 0; i < sizeof(PALETTE); ++i ) {
-        PPU_DATA = PALETTE[i];
-    }
+    // write palettes
+    ppu_addr = PPU_PALETTE;
+    ppu_data = PALETTES;
+    ppu_data_size = sizeof(PALETTES);
+    WritePPU();
 
+
+    // write background tiles
     ppu_addr = PPU_NAMETABLE_0 + 0x1ca;
-    PPU_ADDRESS = (uint8_t)(ppu_addr >> 8);
-    PPU_ADDRESS = (uint8_t)(ppu_addr);
-    for ( i = 0; i < sizeof(TEXT); ++i ) {
-        PPU_DATA = (uint8_t) TEXT[i];
-    }
+    ppu_data = (uint8_t const *) TEXT;
+    ppu_data_size = sizeof(TEXT);
+    WritePPU();
 
+    // write attributes
     ppu_addr = PPU_ATTRIB_TABLE_0 + 0x1a;
-    PPU_ADDRESS = (uint8_t)(ppu_addr >> 8);
-    PPU_ADDRESS = (uint8_t)(ppu_addr);
-    for ( i = 0; i < 4; ++i ) {
-        PPU_DATA = ATTRIBUTES[i];
-    }
+    ppu_data = ATTRIBUTES;
+    ppu_data_size = sizeof(ATTRIBUTES);
+    WritePPU();
 
     ResetScroll();
     EnablePPU();
 
     attr_offset = ATTR_SIZE;
+    ppu_data_size = ATTR_SIZE;
     while (1) {
         // rotate colors every 30 frames, which is about every 0.5 seconds on NTSC
         if (FrameCount == 30) {
-            PPU_ADDRESS = (uint8_t)(ppu_addr >> 8);
-            PPU_ADDRESS = (uint8_t)(ppu_addr);
-            for ( i = 0; i < 4; ++i ) {
-                PPU_DATA = ATTRIBUTES[i + attr_offset];
-            }
+            // write attributes
+            ppu_data = ATTRIBUTES + attr_offset;
+            WritePPU();
 
+            // rotate attributes
             attr_offset += ATTR_SIZE;
             if (attr_offset == ATTR_LEN) {
                 attr_offset = 0;
