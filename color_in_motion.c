@@ -7,6 +7,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define TV_NTSC 1
 #include "nes.h"
 #include "reset.h"
 
@@ -29,6 +30,8 @@ const uint8_t PALETTE[] = {
     0, 0, COLOR_WHITE,  // background palette 3
 };
 
+#define ATTR_SIZE 4
+#define ATTR_LEN  12
 const uint8_t ATTRIBUTES[] = {
     // layout 1
     0x00, // 00 00 00 00 or 0 0
@@ -61,6 +64,26 @@ const uint8_t ATTRIBUTES[] = {
           //                0 3
 };
 
+void ResetScroll() {
+    PPU_SCROLL = 0x00;
+    PPU_SCROLL = 0x00;
+}
+
+void EnablePPU() {
+    PPU_CTRL = PPUCTRL_NAMETABLE_0 |
+               PPUCTRL_INC_1_HORIZ |
+               PPUCTRL_SPATTERN_0  |
+               PPUCTRL_BPATTERN_0  |
+               PPUCTRL_SSIZE_8x8   |
+               PPUCTRL_NMI_ON      ;
+
+    PPU_MASK = PPUMASK_COLOR    |
+               PPUMASK_L8_BSHOW |
+               PPUMASK_L8_SSHOW |
+               PPUMASK_BSHOW    |
+               PPUMASK_SSHOW    ;
+}
+
 void main(void) {
     PPU_ADDRESS = (uint8_t)(PPU_PALETTE >> 8);
     PPU_ADDRESS = (uint8_t)(PPU_PALETTE);
@@ -82,15 +105,10 @@ void main(void) {
         PPU_DATA = ATTRIBUTES[i];
     }
 
-    // reset scroll location to top-left of screen
-    PPU_SCROLL = 0x00;
-    PPU_SCROLL = 0x00;
+    ResetScroll();
+    EnablePPU();
 
-    // enable NMI and rendering
-    PPU_CTRL = 0x80;
-    PPU_MASK = 0x1e;
-
-    attr_offset = 4;
+    attr_offset = ATTR_SIZE;
     while (1) {
         // rotate colors every 30 frames, which is about every 0.5 seconds on NTSC
         if (FrameCount == 30) {
@@ -100,14 +118,12 @@ void main(void) {
                 PPU_DATA = ATTRIBUTES[i + attr_offset];
             }
 
-            attr_offset += 4;
-            if (attr_offset == 12) {
+            attr_offset += ATTR_SIZE;
+            if (attr_offset == ATTR_LEN) {
                 attr_offset = 0;
             }
 
-            PPU_SCROLL = 0x00;
-            PPU_SCROLL = 0x00;
-
+            ResetScroll();
             FrameCount = 0;
         }
     };

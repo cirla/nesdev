@@ -7,6 +7,8 @@
 #ifndef NES_H_
 #define NES_H_
 
+#include <stdint.h>
+
 // PPU registers
 #define PPU_CTRL    *((uint8_t*)0x2000)
 #define PPU_MASK    *((uint8_t*)0x2001)
@@ -14,6 +16,42 @@
 #define PPU_SCROLL  *((uint8_t*)0x2005)
 #define PPU_ADDRESS *((uint8_t*)0x2006)
 #define PPU_DATA    *((uint8_t*)0x2007)
+
+// PPU_CTRL flags
+#define PPUCTRL_NAMETABLE_0 0x00 // use nametable 0
+#define PPUCTRL_NAMETABLE_1 0x01 // use nametable 1
+#define PPUCTRL_NAMETABLE_2 0x02 // use nametable 2
+#define PPUCTRL_NAMETABLE_3 0x03 // use nametable 3
+#define PPUCTRL_INC_1_HORIZ 0x00 // PPU_DATA increments 1 horizontally
+#define PPUCTRL_INC_32_VERT 0x04 // PPU_DATA increments 32 vertically
+#define PPUCTRL_SPATTERN_0  0x00 // sprite pattern table 0
+#define PPUCTRL_SPATTERN_1  0x08 // sprite pattern table 1
+#define PPUCTRL_BPATTERN_0  0x00 // background pattern table 0
+#define PPUCTRL_BPATTERN_1  0x10 // background pattern table 1
+#define PPUCTRL_SSIZE_8x8   0x00 // 8x8 sprite size
+#define PPUCTRL_SSIZE_16x16 0x00 // 16x16 sprite size
+#define PPUCTRL_NMI_OFF     0x00 // disable NMIs
+#define PPUCTRL_NMI_ON      0x80 // enable NMIs
+
+// PPU_MASK flags
+#define PPUMASK_COLOR    0x00
+#define PPUMASK_GRAY     0x01
+#define PPUMASK_L8_BHIDE 0x00
+#define PPUMASK_L8_BSHOW 0x02
+#define PPUMASK_L8_SHIDE 0x00
+#define PPUMASK_L8_SSHOW 0x04
+#define PPUMASK_BHIDE    0x00
+#define PPUMASK_BSHOW    0x08
+#define PPUMASK_SHIDE    0x00
+#define PPUMASK_SSHOW    0x10
+#ifdef TV_NTSC
+    #define PPUMASK_EM_RED   0x20
+    #define PPUMASK_EM_GREEN 0x40
+#else // TV_PAL
+    #define PPUMASK_EM_RED   0x40
+    #define PPUMASK_EM_GREEN 0x20
+#endif
+#define PPUMASK_EM_BLUE  0x80
 
 // PPU memory addresses
 #define PPU_PATTERN_TABLE_0 0x0000 // pattern table 0
