@@ -8,18 +8,19 @@
 
 #define TV_NTSC 1
 #include "nes.h"
-
 #include "reset.h"
+
 #include "data.h"
 
 #pragma bss-name(push, "ZEROPAGE")
 uint8_t         i;
 
-uintptr_t       ppu_addr;
-uint8_t const * ppu_data;
-uint8_t         ppu_data_size;
+// used by WritePPU method
+uintptr_t       ppu_addr;      // destination PPU address
+uint8_t const * ppu_data;      // pointer to data to copy to PPU
+uint8_t         ppu_data_size; // # of bytes to copy to PPU
 
-uint8_t         attr_offset;
+uint8_t         attr_offset;   // offset into ATTRIBUTES
 #pragma bss-name(pop)
 
 void ResetScroll() {
@@ -51,7 +52,6 @@ void main(void) {
     ppu_data_size = sizeof(PALETTES);
     WritePPU();
 
-
     // write background tiles
     ppu_addr = PPU_NAMETABLE_0 + TEXT_OFFSET;
     ppu_data = (uint8_t const *) TEXT;
@@ -64,11 +64,11 @@ void main(void) {
     ppu_data_size = ATTR_SIZE;
     WritePPU();
 
+    // turn on rendering
     ResetScroll();
     EnablePPU();
 
     attr_offset = ATTR_SIZE;
-    ppu_data_size = ATTR_SIZE;
     while (1) {
         // rotate colors every 30 frames, which is about every 0.5 seconds on NTSC
         if (FrameCount == 30) {

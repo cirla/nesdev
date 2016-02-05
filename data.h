@@ -13,7 +13,7 @@
 
 #define TEXT_X      10
 #define TEXT_Y      14
-#define TEXT_OFFSET (TEXT_Y * MAX_X + TEXT_X)
+#define TEXT_OFFSET (TEXT_Y * NUM_COLS + TEXT_X)
 char const TEXT[] = "Hello, World!";
 
 uint8_t const PALETTES[] = {
@@ -28,7 +28,7 @@ uint8_t const PALETTES[] = {
 };
 
 #define ATTR_SIZE 4
-#define ATTR_OFFSET ((TEXT_Y / 4) * (MAX_X / 4) + (TEXT_X / 4))
+#define ATTR_OFFSET ((TEXT_Y / 4) * (NUM_COLS / 4) + (TEXT_X / 4))
 uint8_t const ATTRIBUTES[] = {
     // layout 1 - 0120123
     0x00, // 00 00 00 00 or 0 0

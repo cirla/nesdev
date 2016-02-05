@@ -2,6 +2,8 @@
  * nes.h
  *
  * http://timcheeseman.com/nesdev/
+ *
+ * Before including, #define either TV_NTSC or TV_PAL
  */
 
 #ifndef NES_H_
@@ -10,14 +12,16 @@
 #include <stdint.h>
 
 // PPU registers
-#define PPU_CTRL    *((uint8_t*)0x2000)
-#define PPU_MASK    *((uint8_t*)0x2001)
-#define PPU_STATUS  *((uint8_t*)0x2002)
-#define PPU_SCROLL  *((uint8_t*)0x2005)
-#define PPU_ADDRESS *((uint8_t*)0x2006)
-#define PPU_DATA    *((uint8_t*)0x2007)
+// see http://wiki.nesdev.com/w/index.php/PPU_registers
+#define PPU_CTRL    *((uint8_t*) 0x2000)
+#define PPU_MASK    *((uint8_t*) 0x2001)
+#define PPU_STATUS  *((uint8_t*) 0x2002)
+#define PPU_SCROLL  *((uint8_t*) 0x2005)
+#define PPU_ADDRESS *((uint8_t*) 0x2006)
+#define PPU_DATA    *((uint8_t*) 0x2007)
 
 // PPU_CTRL flags
+// see http://wiki.nesdev.com/w/index.php/PPU_registers#Controller_.28.242000.29_.3E_write
 #define PPUCTRL_NAMETABLE_0 0x00 // use nametable 0
 #define PPUCTRL_NAMETABLE_1 0x01 // use nametable 1
 #define PPUCTRL_NAMETABLE_2 0x02 // use nametable 2
@@ -34,6 +38,7 @@
 #define PPUCTRL_NMI_ON      0x80 // enable NMIs
 
 // PPU_MASK flags
+// see http://wiki.nesdev.com/w/index.php/PPU_registers#Mask_.28.242001.29_.3E_write
 #define PPUMASK_COLOR    0x00
 #define PPUMASK_GRAY     0x01
 #define PPUMASK_L8_BHIDE 0x00
@@ -54,6 +59,10 @@
 #define PPUMASK_EM_BLUE  0x80
 
 // PPU memory addresses
+// see http://wiki.nesdev.com/w/index.php/PPU_memory_map
+// and http://wiki.nesdev.com/w/index.php/PPU_nametables
+// and http://wiki.nesdev.com/w/index.php/PPU_attribute_tables
+// and http://wiki.nesdev.com/w/index.php/PPU_palettes#Memory_Map
 #define PPU_PATTERN_TABLE_0 0x0000 // pattern table 0
 #define PPU_PATTERN_TABLE_1 0x1000 // pattern table 1
 #define PPU_NAMETABLE_0     0x2000 // nametable 0
@@ -76,6 +85,7 @@
 #define PPU_PALETTE_SP_3    0x3f1d // sprite palette 3
 
 // PPU palette colors
+// see http://wiki.nesdev.com/w/index.php/PPU_palettes
 #define COLOR_AQUA    0x1c
 #define COLOR_BLACK   0x0f
 #define COLOR_BLUE    0x12
@@ -94,9 +104,17 @@
 #define COLOR_WHITE   0x20
 #define COLOR_YELLOW  0x28
 
-// PPU sprite coordinates
-#define MAX_X 32
-#define MAX_Y 30
+// PPU resolution in 8x8 pixel cells
+// see http://wiki.nesdev.com/w/index.php/PPU_nametables
+#define NUM_COLS 32
+#define NUM_ROWS 30
+
+// PPU framerate
+#ifdef TV_NTSC
+  #define FRAMES_PER_SEC 60
+#else // TV_PAL
+  #define FRAMES_PER_SEC 50
+#endif
 
 #endif // NES_H_
 
