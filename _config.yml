@@ -7,7 +7,6 @@ github_url: "http://github.com/cirla/nesdev"
 description: NES Development Tutorial
 
 encoding: utf-8
-markdown: kramdown
 sass:
     style: :compressed
 timezone: America/New_York
