@@ -68,7 +68,125 @@ nmi:
 For now we're just going to increment the frame count and return from the interrupt handler.
 Now we can detect when the frame changes and how many frames have elapsed!
 
-### Attributes
+For the curious, another way to detect frame changes is to check the highest bit of `PPU_STATUS`, which will be `1` during vertical blanking (a short yet very important period between frames that we will talk about at length later).
 
-### Vertical Blanking
+## Attributes
+
+Before we change the colors every frame we have to first understand [how colors work on the NES](http://wiki.nesdev.com/w/index.php/PPU_palettes).
+Each 16px × 16px area of the background will be associated with a background palette and can make use of its three colors in addition to the background color.
+Our background tiles are all using the third color in each palette (in addition to the global background color), so those are the only colors we will care about setting for now and set the rest to `0`:
+
+{% highlight c %}
+uint8_t const PALETTES[] = {
+    COLOR_BLUE,         // background color
+    0, 0, COLOR_RED,    // background palette 0
+    0,                  // ignored
+    0, 0, COLOR_GREEN,  // background palette 1
+    0,                  // ignored
+    0, 0, COLOR_YELLOW, // background palette 2
+    0,                  // ignored
+    0, 0, COLOR_WHITE,  // background palette 3
+};
+{% endhighlight %}
+
+Now that we have background palettes created, we need to tell the PPU which 16x16 areas are using which palette.
+This is done by setting values in an area at the end of the [nametable](http://wiki.nesdev.com/w/index.php/PPU_nametables) called the [attribute table](http://wiki.nesdev.com/w/index.php/PPU_attribute_tables).
+Each of the 64 bytes in the attribute table controls the palettes for four 16x16 areas (e.g. a 32px × 32px area).
+Because each byte in the attribute table therefore corresponds to a 4x4 grid of 8px background tiles, our offsets into the attribute table will have to account for this:
+
+{% highlight c %}
+#define TEXT_X      10
+#define TEXT_Y      14
+#define TEXT_OFFSET (TEXT_Y * NUM_COLS + TEXT_X)
+…
+#define ATTR_OFFSET ((TEXT_Y / 4) * (NUM_COLS / 4) + (TEXT_X / 4))
+{% endhighlight %}
+
+Looking at our nametable, we can see that our entire "Hello, World!" text is contained by four of these 32px × 32px areas, so we'll only need to set four bytes in the attribute table.
+
+![Nametable]({{site.baseurl}}/images/color_in_motion/nametable.png)
+
+Each of these bytes is composed of four sets of two bits, each representing a palette index (0-3) for a 16x16 area of the background.
+The least significant (rightmost) pair of bits corresponds to the top-left 16x16 area, the next two the top-right, followed by the bottom-left and finally the bottom-right for the most significant pair of bits.
+Let's say we want to set the colors for this 32x32 area so that the "ll" is green (palette 1) and the "o," is yellow (palette 2):
+
+![Attribute Area]({{site.baseurl}}/images/color_in_motion/attribute_area.png)
+
+We would set its byte in the attribute table to `0x90`, or `0b10010000`.
+The two least significant pairs are both `00`, or palette 0 (which we set to red), though this doesn't really matter as those correspond to the top-left and top-right tiles which are blank (i.e. just the background color).
+The next two pairs are `01` and `10` (palletes 1 and 2, respectively), which gives us the colors we want in the bottom-left and bottom-right tiles.
+
+In our [data.h]({{branch_url}}/data.h) we're actually going to define `ATTRIBUTES` to contain three different sets of four bytes each&mdash;one set for each of our three colorschemes that we'll rotate between.
+
+{% highlight c %}
+uint8_t const ATTRIBUTES[] = {
+    // layout 1 - 0120123
+    0x00, // 00 00 00 00 or 0 0
+          //                0 0
+    0x90, // 10 01 00 00 or 0 0
+          //                1 2
+    0x40, // 01 00 00 00 or 0 0
+          //                0 1
+    0xe0, // 11 10 00 00 or 0 0
+          //                2 3
+…
+{% endhighlight %}
+
+## Pushing to the PPU
+
+Now that we've got everything we need, we just have to push it to the PPU.
+Since we're going to be writing chunks of memory to the PPU fairly often, let's create a helper function.
+As we're going to be calling it very frequently, instead of sending the parameters via the stack, we'll use variables in faster zero page RAM:
+
+{% highlight c %}
+uintptr_t       ppu_addr;      // destination PPU address
+uint8_t const * ppu_data;      // pointer to data to copy to PPU
+uint8_t         ppu_data_size; // # of bytes to copy to PPU
+{% endhighlight %}
+
+Our implementation will write the destination address to `PPU_ADDRESS` in two bytes (most significant first), and then write `ppu_data_size` bytes of data starting at `ppu_data` to `PPU_DATA`:
+
+{% highlight c %}
+void WritePPU() {
+    PPU_ADDRESS = (uint8_t)(ppu_addr >> 8);
+    PPU_ADDRESS = (uint8_t)(ppu_addr);
+    for ( i = 0; i < ppu_data_size; ++i ) {
+        PPU_DATA = ppu_data[i];
+    }
+}
+{% endhighlight %}
+
+Now we can very easily write all the data we need to render the first frame of our ROM to the PPU:
+
+{% highlight c %}
+// write palettes
+ppu_addr = PPU_PALETTE;
+ppu_data = PALETTES;
+ppu_data_size = sizeof(PALETTES);
+WritePPU();
+
+// write background tiles
+ppu_addr = PPU_NAMETABLE_0 + TEXT_OFFSET;
+ppu_data = (uint8_t const *) TEXT;
+ppu_data_size = sizeof(TEXT);
+WritePPU();
+
+// write attributes
+ppu_addr = PPU_ATTRIB_TABLE_0 + ATTR_OFFSET;
+ppu_data = ATTRIBUTES;
+ppu_data_size = ATTR_SIZE;
+WritePPU();
+{% endhighlight %}
+
+At this point we can reset the scroll position and tell the PPU to start rendering (and enable NMIs).
+We've encapsulated this in the `ResetScroll` and `EnablePPU` utility functions for better readability and reusability.
+
+### Making it Move
+
+Once we've rendered the first frame, all we have to change in subsequent frames is the four bytes of the attribute table corresponding to our "Hello, World!" tiles.
+This is as easy as setting the `ppu_data` parameter to some offset within `ATTRIBUTES` before invoking `WritePPU`.
+
+## Next Time
+
+In the next post, we'll add some sprites to our screen and use the controller to move them around.
 
