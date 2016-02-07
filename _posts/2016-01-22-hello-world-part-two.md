@@ -159,5 +159,5 @@ That's it! We've covered everything that goes into making a simple NES ROM from 
 
 ## Next Time
 
-In the next post, we'll create a more interesting game loop and explore using palettes to add color to our creation.
+In the next post, [Color in Motion]({{ site.baseurl }}{% post_url 2016-02-06-color-in-motion %}), we'll create a more interesting game loop and explore using palettes to add color to our creation.
 

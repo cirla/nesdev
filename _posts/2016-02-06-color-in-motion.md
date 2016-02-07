@@ -186,6 +186,33 @@ We've encapsulated this in the `ResetScroll` and `EnablePPU` utility functions f
 Once we've rendered the first frame, all we have to change in subsequent frames is the four bytes of the attribute table corresponding to our "Hello, World!" tiles.
 This is as easy as setting the `ppu_data` parameter to some offset within `ATTRIBUTES` before invoking `WritePPU`.
 
+Twice every second (i.e. every `FRAMES_PER_SEC / 2` frames), we'll rotate the `attr_offset` between the three layouts we've defined in `ATTRIBUTES` (then reset the scrolling position and frame count) to give us the rotating color effect:
+
+{% highlight c %}
+attr_offset += ATTR_SIZE;
+if (attr_offset == sizeof(ATTRIBUTES)) {
+    attr_offset = 0;
+}
+
+ResetScroll();
+FrameCount = 0;
+{% endhighlight %}
+
+And that's it!
+
+## An Introduction to Vertical Blanking
+
+It's actually very important that we only write data to the PPU when it's not busy, or else we'll end up with all kinds of weird screen artifacts.
+Before we invoke `EnablePPU`, we can do all the writing we want as we're not rendering the screen yet.
+Once the PPU is pushing pixels to the screen, however, we have to be careful that we're only sending data during a short idle time between frames called vertical blanking (often abbreviated as vblank).
+The PPU generates an NMI when it enters vblank so we can be notified when it's safe to write data.
+
+The PPU spends the vast majority of its time busy, therefore vblank is actually a very, very short period of time (roughly 2200 CPU cycles), so we have to make the most of it.
+As the PPU runs in parallel to the CPU, vblank can end long before our NMI handler code completes&mdash;it's a race to write everything we need before time runs out.
+Fortunately, we're only copying four bytes at most during vblank for our simple ROM, so we have plenty of time, though we still write those bytes immediately after vblank starts (i.e. our `FrameCount` changes) and save the offset rotating for afterwards.
+
+When we move on to more complicated ROMs we'll explore more sophisticated NMI handlers and buffering techniques that make the best use of vblank time.
+
 ## Next Time
 
 In the next post, we'll add some sprites to our screen and use the controller to move them around.
