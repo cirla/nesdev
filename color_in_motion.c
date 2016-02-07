@@ -13,14 +13,14 @@
 #include "data.h"
 
 #pragma bss-name(push, "ZEROPAGE")
-uint8_t         i;
+uint8_t i;           // loop counter
+uint8_t attr_offset; // offset into ATTRIBUTES
 
 // used by WritePPU method
 uintptr_t       ppu_addr;      // destination PPU address
 uint8_t const * ppu_data;      // pointer to data to copy to PPU
 uint8_t         ppu_data_size; // # of bytes to copy to PPU
 
-uint8_t         attr_offset;   // offset into ATTRIBUTES
 #pragma bss-name(pop)
 
 void ResetScroll() {
@@ -70,8 +70,8 @@ void main(void) {
 
     attr_offset = ATTR_SIZE;
     while (1) {
-        // rotate colors every 30 frames, which is about every 0.5 seconds on NTSC
-        if (FrameCount == 30) {
+        // rotate colors every half second
+        if (FrameCount == (FRAMES_PER_SEC / 2)) {
             // write attributes
             ppu_data = ATTRIBUTES + attr_offset;
             WritePPU();
