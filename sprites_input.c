@@ -5,6 +5,7 @@
  */
 
 #include <stdint.h>
+#include <stddef.h>
 
 #define TV_NTSC 1
 #include "nes.h"
@@ -14,13 +15,15 @@
 
 #pragma bss-name(push, "ZEROPAGE")
 uint8_t i;           // loop counter
-uint8_t attr_offset; // offset into ATTRIBUTES
 
 // used by WritePPU method
 uintptr_t       ppu_addr;      // destination PPU address
 uint8_t const * ppu_data;      // pointer to data to copy to PPU
 uint8_t         ppu_data_size; // # of bytes to copy to PPU
+#pragma bss-name(pop)
 
+#pragma bss-name(push, "OAM")
+uint8_t sprites[256];
 #pragma bss-name(pop)
 
 void ResetScroll() {
@@ -33,8 +36,11 @@ void EnablePPU() {
                PPUCTRL_BPATTERN_0  | // background uses pattern table 0
                PPUCTRL_NMI_ON      ; // enable NMIs
 
-    PPU_MASK = PPUMASK_COLOR | // show colors
-               PPUMASK_BSHOW ; // show background
+    PPU_MASK = PPUMASK_COLOR    | // show colors
+               PPUMASK_BSHOW    | // show background
+               PPUMASK_L8_BSHOW | // show background tiles in leftmost 8px
+               PPUMASK_SSHOW    | // show sprites
+               PPUMASK_L8_SSHOW ; // show sprites in leftmost 8px
 }
 
 void WritePPU() {
@@ -52,38 +58,33 @@ void main(void) {
     ppu_data_size = sizeof(PALETTES);
     WritePPU();
 
-    // write background tiles
-    ppu_addr = PPU_NAMETABLE_0 + TEXT_OFFSET;
-    ppu_data = (uint8_t const *) TEXT;
-    ppu_data_size = sizeof(TEXT);
-    WritePPU();
-
-    // write attributes
-    ppu_addr = PPU_ATTRIB_TABLE_0 + ATTR_OFFSET;
-    ppu_data = ATTRIBUTES;
-    ppu_data_size = ATTR_SIZE;
-    WritePPU();
+    sprites[0] = 0x70;
+    sprites[1] = (uint8_t) 'X';
+    sprites[2] = 0x00;
+    sprites[3] = 0x70;
 
     // turn on rendering
     ResetScroll();
     EnablePPU();
 
-    attr_offset = ATTR_SIZE;
     while (1) {
-        // rotate colors every half second
-        if (FrameCount == (FRAMES_PER_SEC / 2)) {
-            // write attributes
-            ppu_data = ATTRIBUTES + attr_offset;
-            WritePPU();
+        WaitFrame();
+        ResetScroll();
 
-            // rotate attributes
-            attr_offset += ATTR_SIZE;
-            if (attr_offset == sizeof(ATTRIBUTES)) {
-                attr_offset = 0;
-            }
+        if (InputPort1 & BUTTON_UP) {
+            sprites[0]--;
+        }
 
-            ResetScroll();
-            FrameCount = 0;
+        if (InputPort1 & BUTTON_DOWN) {
+            sprites[0]++;
+        }
+
+        if (InputPort1 & BUTTON_LEFT) {
+            sprites[3]--;
+        }
+
+        if (InputPort1 & BUTTON_RIGHT) {
+            sprites[3]++;
         }
     };
 };

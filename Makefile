@@ -1,4 +1,4 @@
-NAME = color_in_motion
+NAME = sprites_input
 EMULATOR = fceux
 
 build:
