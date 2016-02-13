@@ -23,7 +23,7 @@ uint8_t         ppu_data_size; // # of bytes to copy to PPU
 #pragma bss-name(pop)
 
 #pragma bss-name(push, "OAM")
-uint8_t sprites[256];
+sprite_t player;
 #pragma bss-name(pop)
 
 void ResetScroll() {
@@ -58,10 +58,10 @@ void main(void) {
     ppu_data_size = sizeof(PALETTES);
     WritePPU();
 
-    sprites[0] = 0x70;
-    sprites[1] = (uint8_t) 'X';
-    sprites[2] = 0x00;
-    sprites[3] = 0x70;
+    // initialize player sprite
+    player.x = (MAX_X / 2) - 4;
+    player.y = (MAX_Y / 2) - 4;
+    player.tile_index = (uint8_t) '@';
 
     // turn on rendering
     ResetScroll();
@@ -72,19 +72,27 @@ void main(void) {
         ResetScroll();
 
         if (InputPort1 & BUTTON_UP) {
-            sprites[0]--;
+            if (player.y > MIN_Y) {
+                --player.y;
+            }
         }
 
         if (InputPort1 & BUTTON_DOWN) {
-            sprites[0]++;
+            if (player.y < MAX_Y - 8) {
+                ++player.y;
+            }
         }
 
         if (InputPort1 & BUTTON_LEFT) {
-            sprites[3]--;
+            if (player.x > MIN_X) {
+                --player.x;
+            }
         }
 
         if (InputPort1 & BUTTON_RIGHT) {
-            sprites[3]++;
+            if (player.x < MAX_X - 8) {
+                ++player.x;
+            }
         }
     };
 };

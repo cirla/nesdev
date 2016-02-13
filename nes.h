@@ -104,8 +104,17 @@
 #define COLOR_WHITE   0x20
 #define COLOR_YELLOW  0x28
 
-// PPU resolution in 8x8 pixel cells
+// PPU resolution
 // see http://wiki.nesdev.com/w/index.php/PPU_nametables
+#define MIN_X     0
+#define MAX_X   256
+#ifdef TV_NTSC
+  #define MIN_Y   8
+  #define MAX_Y 231
+#else // TV_PAL
+  #define MIN_Y   0
+  #define MAX_Y 239
+#endif
 #define NUM_COLS 32
 #define NUM_ROWS 30
 
@@ -115,6 +124,14 @@
 #else // TV_PAL
   #define FRAMES_PER_SEC 50
 #endif
+
+// OAM sprite
+typedef struct sprite {
+    uint8_t y;
+    uint8_t tile_index;
+    uint8_t attributes;
+    uint8_t x;
+} sprite_t;
 
 // standard controller buttons
 #define BUTTON_RIGHT  0x01
