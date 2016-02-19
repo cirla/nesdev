@@ -1,5 +1,5 @@
 /**
- * Color in Motion
+ * Sprites and Input
  *
  * http://timcheeseman.com/nesdev/
  */
