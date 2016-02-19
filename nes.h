@@ -106,17 +106,25 @@
 
 // PPU resolution
 // see http://wiki.nesdev.com/w/index.php/PPU_nametables
-#define MIN_X     0
-#define MAX_X   256
+#define MIN_X        0
+#define MAX_X      256
+#define NUM_COLS    32
 #ifdef TV_NTSC
-  #define MIN_Y   8
-  #define MAX_Y 231
+  #define MIN_Y      8
+  #define MAX_Y    231
+  #define NUM_ROWS  28
+  #define FIRST_ROW  1
+  #define LAST_ROW  27
 #else // TV_PAL
-  #define MIN_Y   0
-  #define MAX_Y 239
+  #define MIN_Y      0
+  #define MAX_Y    239
+  #define NUM_ROWS  30
+  #define FIRST_ROW  0
+  #define LAST_ROW  29
 #endif
-#define NUM_COLS 32
-#define NUM_ROWS 30
+#define NAMETABLE_OFFSET (NUM_COLS * FIRST_ROW)
+#define SPRITE_HEIGHT    8
+#define SPRITE_WIDTH     8
 
 // PPU framerate
 #ifdef TV_NTSC

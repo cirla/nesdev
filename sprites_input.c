@@ -14,7 +14,8 @@
 #include "data.h"
 
 #pragma bss-name(push, "ZEROPAGE")
-uint8_t i;           // loop counter
+uint8_t i; // loop counter
+uint8_t j; // loop counter
 
 // used by WritePPU method
 uintptr_t       ppu_addr;      // destination PPU address
@@ -51,6 +52,34 @@ void WritePPU() {
     }
 }
 
+void DrawBackground() {
+    PPU_ADDRESS = (uint8_t)((PPU_NAMETABLE_0 + NAMETABLE_OFFSET) >> 8);
+    PPU_ADDRESS = (uint8_t)(PPU_NAMETABLE_0 + NAMETABLE_OFFSET);
+
+    // draw top
+    PPU_DATA = BORDER_TL;
+    for(i = 0; i < (NUM_COLS - 2); ++i) {
+        PPU_DATA = BORDER_T;
+    }
+    PPU_DATA = BORDER_TR;
+
+    // draw sides
+    for(i = 0; i < (NUM_ROWS - 2); ++i) {
+        PPU_DATA = BORDER_L;
+        for(j = 0; j < (NUM_COLS - 2); ++j) {
+            PPU_DATA = BLANK_TILE;
+        }
+        PPU_DATA = BORDER_R;
+    }
+
+    // draw bottom
+    PPU_DATA = BORDER_BL;
+    for(i = 0; i < (NUM_COLS - 2); ++i) {
+        PPU_DATA = BORDER_B;
+    }
+    PPU_DATA = BORDER_BR;
+}
+
 void main(void) {
     // write palettes
     ppu_addr = PPU_PALETTE;
@@ -58,10 +87,13 @@ void main(void) {
     ppu_data_size = sizeof(PALETTES);
     WritePPU();
 
+    // draw background
+    DrawBackground();
+
     // initialize player sprite
-    player.x = (MAX_X / 2) - 4;
-    player.y = (MAX_Y / 2) - 4;
-    player.tile_index = (uint8_t) '@';
+    player.x = (MAX_X / 2) - (SPRITE_WIDTH / 2);
+    player.y = (MAX_Y / 2) - (SPRITE_HEIGHT / 2);
+    player.tile_index = SPRITE_PLAYER;
 
     // turn on rendering
     ResetScroll();
@@ -72,25 +104,25 @@ void main(void) {
         ResetScroll();
 
         if (InputPort1 & BUTTON_UP) {
-            if (player.y > MIN_Y) {
+            if (player.y > MIN_Y + SPRITE_HEIGHT) {
                 --player.y;
             }
         }
 
         if (InputPort1 & BUTTON_DOWN) {
-            if (player.y < MAX_Y - 8) {
+            if (player.y < MAX_Y - (2 * SPRITE_HEIGHT)) {
                 ++player.y;
             }
         }
 
         if (InputPort1 & BUTTON_LEFT) {
-            if (player.x > MIN_X) {
+            if (player.x > MIN_X + SPRITE_WIDTH) {
                 --player.x;
             }
         }
 
         if (InputPort1 & BUTTON_RIGHT) {
-            if (player.x < MAX_X - 8) {
+            if (player.x < MAX_X - (2 * SPRITE_WIDTH)) {
                 ++player.x;
             }
         }
