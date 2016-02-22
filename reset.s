@@ -92,24 +92,20 @@ start:
 @clear_ram:
     sta $00,   x
     sta $0100, x
+    sta $0200, x
     sta $0300, x
     sta $0400, x
     sta $0500, x
     sta $0600, x
-    sta $0700, x ; Remove this if you're storing reset-persistent data
-
-    ; We skipped $0200, x on purpose. Usually, RAM page 2 is used for the
-    ; display list to be copied to OAM. OAM needs to be initialized to
-    ; $ef-$ff, not 0, or we'll get a bunch of garbage sprites at (0, 0).
-
+    sta $0700, x
     inx
     bne @clear_ram
 
-    ; Initialize OAM data in $0200 to have all y coordinates off-screen
-    ; (e.g. set every fourth byte starting at $0200 to $ef)
+    ; Initialize OAM data to have all y coordinates off-screen
+    ; e.g. set every fourth byte for the 256 bytes starting at __OAM_LOAD__ to $ef
     lda #$ef
 @clear_oam:
-    sta $0200, x
+    sta __OAM_LOAD__, x
 
     inx
     inx
@@ -125,13 +121,13 @@ start:
 
     ; initialize PPU OAM
     stx OAM_ADDRESS ; $00
-    lda #$02 ; use page $0200-$02ff
+    lda #>(__OAM_LOAD__)
     sta OAM_DMA
 
     ; set the C stack pointer
     lda #<(__STACK_START__ + __STACK_SIZE__)
     sta sp
-    lda #>(__STACK_START__+__STACK_SIZE__)
+    lda #>(__STACK_START__ + __STACK_SIZE__)
     sta sp+1
 
     lda PPU_STATUS ; reset the PPU latch
@@ -223,7 +219,7 @@ nmi:
     ; start OAM DMA
     lda #0
     sta OAM_ADDRESS
-    lda #$02 ;#>(__OAM_LOAD__)
+    lda #>(__OAM_LOAD__)
     sta OAM_DMA
 
     ; increment frame counter
