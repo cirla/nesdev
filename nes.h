@@ -134,14 +134,16 @@
 #endif
 
 // OAM sprite
+// see http://wiki.nesdev.com/w/index.php/PPU_OAM
 typedef struct sprite {
-    uint8_t y;
-    uint8_t tile_index;
-    uint8_t attributes;
-    uint8_t x;
+    uint8_t y;          // y pixel coordinate
+    uint8_t tile_index; // index into pattern table
+    uint8_t attributes; // attribute flags
+    uint8_t x;          // x pixel coordinate
 } sprite_t;
 
 // standard controller buttons
+// see http://wiki.nesdev.com/w/index.php/Standard_controller
 #define BUTTON_RIGHT  0x01
 #define BUTTON_LEFT   0x02
 #define BUTTON_DOWN   0x04
