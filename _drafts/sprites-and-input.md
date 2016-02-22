@@ -79,7 +79,7 @@ The PPU can only render eight sprites on the same scan line; those nearer the be
 
 We can write data to OAM very similarly to how we write to the rest of the PPU using the `OAM_ADDRESS` and `OAM_DATA` [registers](http://wiki.nesdev.com/w/index.php/PPU_registers), but there's actually a more efficient way to do it.
 The NES actually has a [DMA](https://en.wikipedia.org/wiki/Direct_memory_access) (Direct Memory Access) mechanism to write an entire page of RAM (256 bytes) directly into the PPU's OAM much more quickly than we could looping through and writing one byte at a time into `OAM_DATA`.
-If you remember from the introduction to vblank in the last post, we're limited to writing to PPU memory (including OAM) during the (very, very short) vblank period, so we want to save as many cycles as we can.
+If you remember from the introduction to vblank in the [last post]({{ site.baseurl }}{% post_url 2016-02-06-color-in-motion %}#an-introduction-to-vertical-blanking), we're limited to writing to PPU memory (including OAM) during the (very, very short) vblank period, so we want to save as many cycles as we can.
 
 Firstly, we're going to set aside a page of RAM to be used as a buffer that we'll write to OAM every frame:
 
@@ -111,7 +111,34 @@ sta OAM_DMA
 
 Now we can update our buffer anytime we want and any changes will be pushed to the PPU during the next vblank.
 
-**TODO:** Sprite struct and initialization.
+To make our code more readable, we'll define a struct to represent a sprite in our buffer:
+
+{% highlight c %}
+// OAM sprite
+typedef struct sprite {
+    uint8_t y;          // y pixel coordinate
+    uint8_t tile_index; // index into pattern table
+    uint8_t attributes; // attribute flags
+    uint8_t x;          // x pixel coordinate
+} sprite_t;
+{% endhighlight %}
+
+And we'll create just one sprite for our player at the beginning of our OAM buffer, then initialize it before enabling the PPU:
+
+{% highlight c %}
+#pragma bss-name(push, "OAM")
+sprite_t player;
+#pragma bss-name(pop)
+
+…
+
+player.x = (MAX_X / 2) - (SPRITE_WIDTH / 2);
+player.y = (MAX_Y / 2) - (SPRITE_HEIGHT / 2);
+player.tile_index = SPRITE_PLAYER;
+{% endhighlight %}
+
+Now we have our player smack dab in the middle of the screen.
+Let's make it move!
 
 ## Pulling the Strings
 
