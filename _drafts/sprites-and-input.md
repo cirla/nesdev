@@ -142,9 +142,87 @@ Let's make it move!
 
 ## Pulling the Strings
 
-**TODO:** Input handling
+We'll want to poll the input from the controllers with every frame, but we want to make sure we're not wasting valuable vblank time.
+To achieve this, we'll create a new method, `WaitFrame` that will spin idly until our NMI handler completes, then carry out some non-PPU tasks that we want to do every frame, like reading input, then yield back to our game loop:
+
+{% highlight asm %}
+_WaitFrame:
+    inc frame_done
+@loop:
+    lda frame_done
+    bne @loop
+
+    jsr UpdateInput
+
+    rts
+{% endhighlight %}
+
+We've written this in assembly because it's super simple and we can loop more efficiently.
+Notice the use of a new zero page variable, `frame_done`, which we won't need to export to C as it's only used internally.
+A call to `WaitFrame` will set this flag to a non-zero value (via `inc`) then wait for it to be zero, which will happen at the end of our NMI handler:
+
+{% highlight asm %}
+; release _WaitFrame
+lda #0
+sta frame_done
+{% endhighlight %}
+
+As you can guess by the lack of a leading underscore, we'll also write `UpdateInput` in assembly and won't export it to C, though we will expose the values that we've read from the controllers.
+
+### Reading controller data
+
+**TODO** controller reading code.
+
+Now we'll just export the necessary symbols:
+
+{% highlight asm %}
+.export _WaitFrame
+.exportzp _FrameCount, _InputPort1, _InputPort1Prev, _InputPort2, _InputPort2Prev
+{% endhighlight %}
+
+And make them easily available in C:
+
+{% highlight c %}
+extern uint8_t InputPort1;
+#pragma zpsym("InputPort1");
+
+…
+
+void WaitFrame(void);
+{% endhighlight %}
+
+### Acting on the input
+
+Finally, we can make our sprite move every frame by updating its coordinates in our OAM buffer based on which buttons are currently pressed:
+
+{% highlight c %}
+if (InputPort1 & BUTTON_UP) {
+    if (player.y > MIN_Y + SPRITE_HEIGHT) {
+        --player.y;
+    }
+}
+
+if (InputPort1 & BUTTON_DOWN) {
+    if (player.y < MAX_Y - (2 * SPRITE_HEIGHT)) {
+        ++player.y;
+    }
+}
+
+…
+{% endhighlight %}
+
+We left an 8px (`SPRITE_HEIGHT`) buffer so that we don't overlap with the border that we drew in the background.
+The coordinates are for the top-left corner of the sprite, so we have to take into account the height of the sprite itself in addition to the height of the border tile for the bottom boundary, hence the `(2 * SPRITE_HEIGHT)`.
+
+Now take a few minutes and enjoy commanding your character to explore the vast expanse of the screen.
 
 ## Next Time
 
 In the next post, we'll look at more efficient ways to create and draw static (non-scrolling) backgrounds, using metasprites to represent multi-tile sprites, and animating our sprites.
+
+### Appendix: NTSC Overscan
+
+While poking around [nes.h]({{branch_url}}/nes.h), you might have noticed some funky stuff going on with NTSC vs. PAL.
+Due to [overscan](http://wiki.nesdev.com/w/index.php/Overscan), NES games played on an NTSC TV will often have the first and last eight pixels (which is also the first and last row in the nametable) hidden by the border of the TV.
+Many emulators therefore will only render lines 8-231 when playing an NTSC ROM, so we'll create some handy constants that take this all into account and make our loops (like those in `DrawBackground`) easier to write.
 
