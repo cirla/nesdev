@@ -26,15 +26,19 @@ INPUT_2       = $4017
 
 .segment "ZEROPAGE"
 
+; Frame handling
 _FrameCount:       .res 1
 frame_done:        .res 1
 
+; Input handling
 _InputPort1:       .res 1
 _InputPort1Prev:   .res 1
 _InputPort2:       .res 1
 _InputPort2Prev:   .res 1
-input_port_1_test: .res 1
-input_port_2_test: .res 1
+
+; arbitrary-use temp vars
+temp1:             .res 1
+temp2:             .res 1
 
 .segment "HEADER"
 
@@ -145,69 +149,62 @@ _WaitFrame:
 
     rts
 
+; Read Standard Controller input
+; Keep track of last state to detect button up/down transitions
+; Read twice to account for DMC DMA interference
+; see http://wiki.nesdev.com/w/index.php/Controller_Reading
+; see http://wiki.nesdev.com/w/index.php/Standard_controller#APU_DMC_conflict_glitch
 UpdateInput:
-    ; store previous input
+    ; store previous input state
     lda _InputPort1
     sta _InputPort1Prev
     lda _InputPort2
     sta _InputPort2Prev
 
-    ; strobe controllers
-    ldx #$01
-    stx INPUT
-    dex
-    stx INPUT
-
-    ldy #08
-@readInputTest:
-    lda INPUT_1
-    and #$01
-    cmp #$01
-    rol input_port_1_test
-    lda INPUT_2
-    and #$01
-    cmp #$01
-    rol input_port_2_test
-    dey
-    bne @readInputTest
-
-@restrobe:
-    ; strobe controllers
-    ldx #$01
-    stx INPUT
-    dex
-    stx INPUT
-
-    ldy #08
-@readInputAgain:
-    lda INPUT_1
-    and #$01
-    cmp #$01
-    rol _InputPort1
-    lda INPUT_2
-    and #$01
-    cmp #$01
-    rol _InputPort2
-    dey
-    bne @readInputAgain
-
+    ; get first reading and save to temp
+    jsr ReadInput
+@mismatch:
     lda _InputPort1
-    cmp input_port_1_test
-    bne @cmpFailed
+    sta temp1
     lda _InputPort2
-    cmp input_port_2_test
-    bne @cmpFailed
+    sta temp2
+
+    ; get second reading and compare
+    jsr ReadInput
+    lda _InputPort1
+    cmp temp1
+    bne @mismatch
+    lda _InputPort2
+    cmp temp2
+    bne @mismatch
 
     rts
 
-@cmpFailed:
-    lda _InputPort1
-    sta input_port_1_test
-    lda _InputPort2
-    sta input_port_2_test
+; Read the states of both controllers to _InputPort1 and _InputPort2
+ReadInput:
+    ; strobe controllers
+    ldx #$01
+    stx INPUT
+    dex
+    stx INPUT
 
-    jmp @restrobe
+    ldy #08         ; loop over all 8 buttons
+@loop:
+    lda INPUT_1     ; read button state
+    and #$03        ; mask lowest 2 bits
+    cmp #$01        ; set carry bit to button state
+    rol _InputPort1 ; rotate carry bit into button var
+    lda INPUT_2     ; repeat for second controller
+    and #$03
+    cmp #$01
+    rol _InputPort2
+    dey
+    bne @loop
 
+    rts
+
+; NMI handler
+; Push OAM changes via DMA, increment frame counter, and release _WaitFrame
 nmi:
     ; save registers to stack
     pha
@@ -238,7 +235,9 @@ nmi:
 
     rti
 
+; IRQ handler
 irq:
+    ; do nothing
     rti
 
 .segment "RODATA"
