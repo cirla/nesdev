@@ -171,7 +171,66 @@ As you can guess by the lack of a leading underscore, we'll also write `UpdateIn
 
 ### Reading controller data
 
-**TODO** controller reading code.
+The code to read the controller values is fairly straightforward:
+
+{% highlight asm %}
+INPUT   = $4016 ; controller input (write)
+INPUT_1 = $4016 ; input port 1 (read)
+INPUT_2 = $4017 ; input port 2 (read)
+
+…
+
+; Read the states of both controllers to _InputPort1 and _InputPort2
+ReadInput:
+    ; strobe controllers
+    ldx #$01
+    stx INPUT
+    dex ; x = $00
+    stx INPUT
+
+    ldy #08         ; loop over all 8 buttons
+@loop:
+    lda INPUT_1     ; read button state
+    and #$03        ; mask lowest 2 bits
+    cmp #$01        ; set carry bit to button state
+    rol _InputPort1 ; rotate carry bit into button var
+    lda INPUT_2     ; repeat for second controller
+    and #$03
+    cmp #$01
+    rol _InputPort2
+
+    dey
+    bne @loop
+
+    rts
+{% endhighlight %}
+
+First, we need to strobe the controller by writing a `1` followed by a `0` to a memory-mapped register at `0x4016`.
+Strobe is a term in electronics used to refer to a signal which helps synchronize the data in a bus when the components (here the CPU and the controller) have no common clock.
+By writing `1` we're telling the controller to start filling its internal shift register with button states.
+We have to write a `0` before we start to read those states or else we'll always be reading the state of the first button (the A button).
+
+Each time we read from the controllers shift register (via the memory-mapped `0x4016` and `0x4017`), we get the state of one button in the following order: A, B, Select, Start, Up, Down, Left, Right.
+After reading a button state, we only care about the first two bits, so we'll perform a logical `and` on the value read with the mask `0x03` (or `0b00000011`).
+The [`cmp` instruction](http://www.6502.org/tutorials/compare_instructions.html) will set the [carry flag](https://en.wikipedia.org/wiki/Carry_flag) to `1` if the button is pressed (i.e. the result of the `and` was `1`) and `0` if it isn't.
+Finally, we `rol` ([rotate left](http://www.6502.org/tutorials/6502opcodes.html#ROL)) the carry bit onto the `_InputPortX` variables.
+After doing this eight times, we'll end up with a byte for each controller port where each of the eight bits represent the state of a button on that controller.
+All we need are some masks to be able to test for the states of individual buttons:
+
+{% highlight c %}
+#define BUTTON_RIGHT  0x01
+#define BUTTON_LEFT   0x02
+#define BUTTON_DOWN   0x04
+#define BUTTON_UP     0x08
+#define BUTTON_START  0x10
+#define BUTTON_SELECT 0x20
+#define BUTTON_B      0x40
+#define BUTTON_A      0x80
+{% endhighlight %}
+
+You'll notice that `UpdateInput` actually calls `ReadInput` twice and compares the values from each read, returning only if they are equal.
+This has to do with [a conflict](http://wiki.nesdev.com/w/index.php/Standard_controller#APU_DMC_conflict_glitch) with the [APU](http://wiki.nesdev.com/w/index.php/APU) (Audio Processing Unit) that can sometimes interfere with reading the controller input on NTSC systems.
+If we read the same values twice in a row, we can be reasonably sure that those are the correct values and no interference has occurred.
 
 Now we'll just export the necessary symbols:
 
@@ -196,6 +255,8 @@ void WaitFrame(void);
 Finally, we can make our sprite move every frame by updating its coordinates in our OAM buffer based on which buttons are currently pressed:
 
 {% highlight c %}
+WaitFrame();
+
 if (InputPort1 & BUTTON_UP) {
     if (player.y > MIN_Y + SPRITE_HEIGHT) {
         --player.y;

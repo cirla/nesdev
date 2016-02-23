@@ -215,5 +215,5 @@ When we move on to more complicated ROMs we'll explore more sophisticated NMI ha
 
 ## Next Time
 
-In the next post, we'll add some sprites to our screen and use the controller to move them around.
+In the [next post]({{ site.baseurl }}{% post_url 2016-02-22-sprites-and-input %}), we'll add some sprites to our screen and use the controller to move them around.
 
