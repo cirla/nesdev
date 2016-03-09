@@ -2,7 +2,7 @@
 
 .import _main
 .export __STARTUP__:absolute=1
-.export _WaitFrame
+.export _WaitFrame, _UnRLE
 .exportzp _FrameCount, _InputPort1, _InputPort1Prev, _InputPort2, _InputPort2Prev
 
 ; linker-generated symbols
@@ -15,6 +15,7 @@
 PPU_CTRL      = $2000
 PPU_MASK      = $2001
 PPU_STATUS    = $2002
+PPU_DATA      = $2007
 OAM_ADDRESS   = $2003
 OAM_DMA       = $4014
 APU_DMC       = $4010
@@ -39,6 +40,12 @@ _InputPort2Prev:   .res 1
 ; arbitrary-use temp vars
 temp1:             .res 1
 temp2:             .res 1
+
+; RLE
+RLE_LOW:           .res 1
+RLE_HIGH:          .res 1
+RLE_TAG:           .res 1
+RLE_BYTE:          .res 1
 
 .segment "HEADER"
 
@@ -201,6 +208,44 @@ ReadInput:
     dey
     bne @loop
 
+    rts
+
+; adapted from RLE decompressor by Shiru
+; decompress data from an address in A/X to PPU_DATA
+
+_UnRLE:
+    sta RLE_LOW
+    stx RLE_HIGH
+    ldy #0
+    jsr rle_byte
+    sta RLE_TAG
+@1:
+    jsr rle_byte
+    cmp RLE_TAG
+    beq @2
+    sta PPU_DATA
+    sta RLE_BYTE
+    bne @1
+@2:
+    jsr rle_byte
+    cmp #0
+    beq @4
+    tax
+    lda RLE_BYTE
+@3:
+    sta PPU_DATA
+    dex
+    bne @3
+    beq @1
+@4:
+    rts
+
+rle_byte:
+    lda (RLE_LOW), y
+    inc RLE_LOW
+    bne @1
+    inc RLE_HIGH
+@1:
     rts
 
 ; NMI handler

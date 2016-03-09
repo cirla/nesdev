@@ -25,6 +25,7 @@ extern uint8_t InputPort2Prev;
 #pragma zpsym("InputPort2Prev");
 
 void WaitFrame(void);
+void __fastcall__ UnRLE(uint8_t const * background);
 
 #endif // RESET_H_
 

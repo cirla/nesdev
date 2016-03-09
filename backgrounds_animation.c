@@ -1,5 +1,5 @@
 /**
- * Sprites and Input
+ * Backgrounds and Animation
  *
  * http://timcheeseman.com/nesdev/
  */
@@ -15,7 +15,6 @@
 
 #pragma bss-name(push, "ZEROPAGE")
 uint8_t i; // loop counter
-uint8_t j; // loop counter
 
 // used by WritePPU method
 uintptr_t       ppu_addr;      // destination PPU address
@@ -53,31 +52,9 @@ void WritePPU() {
 }
 
 void DrawBackground() {
-    PPU_ADDRESS = (uint8_t)((PPU_NAMETABLE_0 + NAMETABLE_OFFSET) >> 8);
-    PPU_ADDRESS = (uint8_t)(PPU_NAMETABLE_0 + NAMETABLE_OFFSET);
-
-    // draw top
-    PPU_DATA = BORDER_TL;
-    for(i = 0; i < (NUM_COLS - 2); ++i) {
-        PPU_DATA = BORDER_T;
-    }
-    PPU_DATA = BORDER_TR;
-
-    // draw sides
-    for(i = 0; i < (NUM_ROWS - 2); ++i) {
-        PPU_DATA = BORDER_L;
-        for(j = 0; j < (NUM_COLS - 2); ++j) {
-            PPU_DATA = BLANK_TILE;
-        }
-        PPU_DATA = BORDER_R;
-    }
-
-    // draw bottom
-    PPU_DATA = BORDER_BL;
-    for(i = 0; i < (NUM_COLS - 2); ++i) {
-        PPU_DATA = BORDER_B;
-    }
-    PPU_DATA = BORDER_BR;
+    PPU_ADDRESS = (uint8_t)(PPU_NAMETABLE_0 >> 8);
+    PPU_ADDRESS = (uint8_t)(PPU_NAMETABLE_0);
+    UnRLE(GameBackground);
 }
 
 void main(void) {

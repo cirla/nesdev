@@ -1,4 +1,4 @@
-NAME = sprites_input
+NAME = backgrounds_animation
 EMULATOR = fceux
 
 build:
