@@ -2,7 +2,7 @@
 
 .import _main
 .export __STARTUP__:absolute=1
-.export _WaitFrame, _UnRLE
+.export _WaitFrame, _WaitVBlank, _UnRLE
 .exportzp _FrameCount, _InputPort1, _InputPort1Prev, _InputPort2, _InputPort2Prev
 
 ; linker-generated symbols
@@ -144,6 +144,12 @@ start:
     lda PPU_STATUS ; reset the PPU latch
 
     jmp _main ; call into our C main()
+
+
+_WaitVBlank:
+    bit PPU_STATUS
+    bpl _WaitVBlank
+    rts
 
 
 _WaitFrame:
