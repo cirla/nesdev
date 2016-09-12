@@ -47,6 +47,8 @@ Each color can be represented in a single byte, hence the term "8-bit graphics."
 
 Next, we're defining a few variables, but there are a few things to explain.
 First, the `#pragma bss-name` is a pragma provided by [cc65](http://cc65.github.io/cc65/), the C compiler we're using to target the [6502 CPU](http://wiki.nesdev.com/w/index.php/CPU) in the NES.
+For this tutorial series, I will be using `cc65` compiled from source from the [master branch on Github](https://github.com/cc65/cc65) (V2.15), which is newer than the version provided by package managers like [homebrew](http://brew.sh/).
+As such, the tutorial code may not compile/link on older versions of `cc65`/`ld65`.
 What [the pragma](http://cc65.github.io/doc/cc65.html#ss7.1) does is allow us to specify where in memory we want variables to be defined.
 We'll get to where we define these memory areas in a bit, but first we'll talk about how memory is laid out on the NES.
 
