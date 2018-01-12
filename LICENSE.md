@@ -1,6 +1,6 @@
 The MIT License (MIT)
 
-Copyright (c) 2016 Tim Cheeseman
+Copyright (c) 2018 Tim Cheeseman
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +19,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+All files under the `lib` directory are specifically excluded from this license as these are derivatives of work made by other authors.
+See [data/COPYRIGHT.md](https://github.com/cirla/nesdev/blob/wedding/data/COPYRIGHT.md) for additional exclusions to this license.
+
