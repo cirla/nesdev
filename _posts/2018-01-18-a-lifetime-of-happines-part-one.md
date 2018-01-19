@@ -1,5 +1,5 @@
 ---
-title: A Lifetime of HappiNES
+title: "A Lifetime of HappiNES: Part 1"
 layout: post
 git_branch: wedding
 ---
@@ -10,7 +10,7 @@ It's been a while since the [last post]({{ site.baseurl }}{% post_url 2016-02-22
 
 A friend of mine recently got hitched to a pretty rad lady, and I didn't want him unprepared for the quest ahead.
 He just happens to be a retro gaming console collector and enthusiast (not to mention one of the top-ranked [Duck Hunt](https://en.wikipedia.org/wiki/Duck_Hunt) players in the world), so I figured I'd try making them a custom NES game, cartridge and all.
-This post is going to cover that process all the way through, including all of the manual and messy bits.
+This series of posts is going to cover that process all the way through, including all of the manual and messy bits.
 
 Partly to maintain anonymity, but mostly to keep their gift a special one-of-a-kind collector's item, for this post we'll instead be making a gift to send back in time to [Princess Elizabeth's wedding](https://en.wikipedia.org/wiki/Wedding_of_Princess_Elizabeth_and_Philip_Mountbatten,_Duke_of_Edinburgh).
 
@@ -156,18 +156,75 @@ I tried to go for the fewest colors that still preserved the general look of the
 
 To make the full title screen, we paste that image into a new 256x240 canvas, find a nice [6x6 pixel font](https://fontstruct.com/fontstructions/show/1205992/8_bit_6x6_nostalgia) to fit inside the 8x8 tiles, and add some text.
 It's important that we place the letters along an 8x8 grid so that we only need one tile in CHR memory per letter.
+I'm also targeting NTSC, so we are accounting for [overscan](https://wiki.nesdev.com/w/index.php/Overscan#NTSC) and
+pretended the top and bottom 8px of the image don't exist.
+I also highly recommend [Mega Cat Studios' in-depth guide to NES graphics](https://megacatstudios.com/blogs/press/creating-nes-graphics) as a good primer.
 
 ![Title Screen]({{site.baseurl}}/images/wedding/bg_title.png)
+
+This is great, but we can't exactly just load up a PNG on the NES.
+Luckily, Dustin Long made an awesome utility called [makechr](https://github.com/dustmop/makechr) which is a huge help for turning 256x240 images into the data we need to render them.
+For this example, it's as simple as running the following command:
 
 {% highlight sh %}
 makechr -e error.png bg_title.png
 {% endhighlight %}
 
+If there are any errors (e.g. pixel color not in the NES palette, too many palettes, more colors in one 16x16 zone than can fit in a palette), there will be error output messages and a file named `error.png` will contain the source image with a grid overlay and red squares highlighting the problematic areas of the image.
+
+If there are no errors, we should have four output files:
+
+- `chr.dat` with the data for the sprite tiles we'll put in CHR ROM
+- `nametable.dat` describing which tiles go where in the PPU nametable
+- `attributes.dat` describing which palettes to use in the PPU nametable
+- `palette.dat` with the PPU color palettes
+
+We want to next load these up in the [NES Screen Tool](https://shiru.untergrund.net/files/nesst.zip) to preview that everything looks OK and be able to export the data to C code.
+To be able to do that, we'll need to get the data in a format that NESst will understand.
+
 {% highlight sh %}
+cp chr.dat sprites.chr
 cp nametable.dat bg_title.nam
-cat attributes.dat >> bg_title.name
+# append attributes to nametable
+cat attributes.dat >> bg_title.nam
+# get just the first 4 palettes (e.g. get bg palettes, ignore sprite palettes)
 head -c 16 palette.dat > bg_title.pal
 {% endhighlight %}
+
+Now, we can open up NESst.exe (like most of the tools we'll be using, this was created for Windows but runs just fine in [wine](https://www.winehq.org/) on macOS and Linux) and first open up the `sprites.chr` file and then the `bg_title.nam` nametable file.
+The palette should load automatically as long as it shares the same name except with the .pal extension (i.e. `bg_title.pal`).
+
+![Title in NESst]({{site.baseurl}}/images/wedding/title_nesst.png)
+
+From within NESst, you can tweak the pixels of your CHR tiles using its built-in editor (or use a tool called [YY-CHR](http://www.geocities.jp/yy_6502/yychr/index.html) for more advanced features), modify the palettes, or move tiles around to suit you.
+We did most of the work for the title screen upfront in creating our PNG earlier, but we'll be using NESst in more earnest for the level and credits screens.
+
+Once everything looks good, we'll export the nametable and palette data to C code.
+First, go to *Nametable*→*Save nametable and attributes* and choose "RLE packed as C header" from the dropdown to save to a C header (.h) file.
+You could just use the "C header" option, but using [run-length encoded](https://en.wikipedia.org/wiki/Run-length_encoding) data saves us some PRG ROM space and we want to add music later.
+Next, go to *Palettes*→*Put to the clipboard*→*C data* and paste that into the same header file, resulting in something
+like this:
+
+{% highlight c %}
+#ifndef BG_TITLE_H_
+#define BG_TITLE_H_
+
+#include <stdint.h>
+
+const uint8_t BG_TITLE[334] = {
+0x8b,0x00,0x8b,0xa7,0x01,0x00,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x00,0x02,0x09,
+...
+0x55,0x00,0x8b,0x03,0x0c,0x88,0xa5,0x25,0x00,0x8b,0x10,0x00,0x8b,0x00
+};
+
+const uint8_t PAL_TITLE[16] = {
+0x37,0x30,0x17,0x0f,0x37,0x30,0x26,0x08,0x37,0x30,0x26,0x0f,0x37,0x30,0x28,0x0f
+};
+
+#endif // BG_TITLE_H_
+{% endhighlight %}
+
+Now we can use the [UnRLE asm code]({{branch_url}}/lib/rle.s) (which is borrowed from [Doug Fraker's tutorial code](https://nesdoug.com/2015/11/28/9-drawing-a-full-background/), which is itself a CA65 rewrite of Shiru's NESASM version that is included with NESst) to create a helper function to render RLE-compressed background data to the PPU nametable:
 
 {% highlight c %}
 uint8_t const * bg;            // background data
@@ -179,10 +236,11 @@ void DrawBackground() {
 }
 {% endhighlight %}
 
+Now, our `InitTitle` method is as simple as loading the background palette and nametable data into the appropriate areas
+of PPU memory.
+
 {% highlight c %}
 void InitTitle() {
-    DisablePPU();
-
     // write palettes
     ppu_addr = PPU_PALETTE;
     ppu_data = PAL_TITLE;
@@ -192,17 +250,10 @@ void InitTitle() {
     // draw background
     bg = BG_TITLE;
     DrawBackground();
-
-    WaitVBlank();
-    EnablePPU();
 }
 {% endhighlight %}
 
-## Level
-
-## Credits
-
-## Music and Sound Effects
-
-## The Cartridge
+And just like that, we have the beginnings of our game!
+That's all for now, but stay tuned
+If you're impatient, feel free to check out the [full source code]({{branch_url}}) or load [the finished product]({{branch_url}}/wedding.nes) in your NES emulator of choice.
 
