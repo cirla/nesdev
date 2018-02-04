@@ -163,7 +163,7 @@ I also highly recommend [Mega Cat Studios' in-depth guide to NES graphics](https
 ![Title Screen]({{site.baseurl}}/images/wedding/bg_title.png)
 
 This is great, but we can't exactly just load up a PNG on the NES.
-Luckily, Dustin Long made an awesome utility called [makechr](https://github.com/dustmop/makechr) which is a huge help for turning 256x240 images into the data we need to render them.
+Luckily, [Dustin Long](http://dustmop.io/) made an awesome utility called [makechr](https://github.com/dustmop/makechr) which is a huge help for turning 256x240 images into the data we need to render them.
 For this example, it's as simple as running the following command:
 
 {% highlight sh %}
@@ -254,6 +254,6 @@ void InitTitle() {
 {% endhighlight %}
 
 And just like that, we have the beginnings of our game!
-That's all for now, but stay tuned
+That's all for now, but stay tuned for [the next post]({{ site.baseurl }}{% post_url 2018-02-03-a-lifetime-of-happines-part-two %}).
 If you're impatient, feel free to check out the [full source code]({{branch_url}}) or load [the finished product]({{branch_url}}/wedding.nes) in your NES emulator of choice.
 

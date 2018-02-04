@@ -10,4 +10,5 @@ encoding: utf-8
 sass:
     style: :compressed
 timezone: America/New_York
+highlighter: pygments
 
