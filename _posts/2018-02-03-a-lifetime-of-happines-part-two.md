@@ -192,5 +192,5 @@ void HandleInput() {
 {% endhighlight %}
 
 Our game is really starting to come together!
-That's all for now, but next time we're going to add our level and credits screens into the mix and handle transitions between them.
+That's all for now, but [next time]({{ site.baseurl }}{% post_url 2018-02-08-a-lifetime-of-happines-part-three %}) we're going to add our level and credits screens into the mix and handle transitions between them.
 
