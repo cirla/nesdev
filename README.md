@@ -1,4 +1,4 @@
 # NES Development Tutorial
 
-Follow along at [timcheeseman.com/nesdev](http://timcheeseman.com/nesdev).
+Follow along at [timcheeseman.com/nesdev](https://timcheeseman.com/nesdev).
 
