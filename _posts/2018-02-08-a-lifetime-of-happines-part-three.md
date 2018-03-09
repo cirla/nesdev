@@ -158,5 +158,5 @@ void InitLevel() {
 {% endhighlight %}
 
 And now our backgrounds should render correctly on all screens!
-That's all for now, but next time we'll finish up the level screen with sprites, collisions, and inventory.
+That's all for now, but [next time]({{ site.baseurl }}{% post_url 2018-03-08-a-lifetime-of-happines-part-four %}) we'll finish up the level screen with sprites, collisions, and inventory.
 
