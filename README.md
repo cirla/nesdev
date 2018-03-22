@@ -9,3 +9,4 @@ Follow along at [timcheeseman.com/nesdev](http://timcheeseman.com/nesdev).
  - [A Lifetime of HappiNES: Part 1](https://timcheeseman.com/nesdev/2018/01/18/a-lifetime-of-happines-part-one.html) ([branch](https://github.com/cirla/nesdev/tree/wedding))
  - [A Lifetime of HappiNES: Part 2](https://timcheeseman.com/nesdev/2018/02/03/a-lifetime-of-happines-part-two.html) ([branch](https://github.com/cirla/nesdev/tree/wedding))
  - [A Lifetime of HappiNES: Part 3](https://timcheeseman.com/nesdev/2018/02/08/a-lifetime-of-happines-part-three.html) ([branch](https://github.com/cirla/nesdev/tree/wedding))
+ - [A Lifetime of HappiNES: Part 4](https://timcheeseman.com/nesdev/2018/03/08/a-lifetime-of-happines-part-four.html) ([branch](https://github.com/cirla/nesdev/tree/wedding))
