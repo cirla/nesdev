@@ -75,16 +75,13 @@ uint8_t const * player_sprite_data;
 
 uint8_t fade_palette[sizeof(PAL_LEVEL)];
 uint8_t fade_count;
+uint8_t text_locs[N_TEXT_SPRITES];
 
 // used by WritePPU method
 uintptr_t       ppu_addr;      // destination PPU address
 uint8_t const * ppu_data;      // pointer to data to copy to PPU
 uint8_t         ppu_data_size; // # of bytes to copy to PPU
 #pragma bss-name(pop)
-
-
-// "slow" RAM
-uint8_t text_locs[N_TEXT_SPRITES];
 
 
 // sprites
@@ -528,10 +525,9 @@ void UpdateFade() {
             ResetScroll();
             FadeStep();
         }
-    }
-
-    if(fade_count == 10) {
-        InitCredits();
+        if(fade_count == 10) {
+            InitCredits();
+        }
     }
 }
 
