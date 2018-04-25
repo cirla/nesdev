@@ -289,19 +289,19 @@ void FadeStep() {
 
 
 void InitCredits() {
+    DisablePPU();
+
     // hide sprites
     for(i = 0; i < 16; i++) {
         player_sprites[i].y = SPRITE_OFFSCREEN_Y;
     }
-    for(i = 0; i < 16; i++) {
+    for(i = 0; i < 4; i++) {
         ring_sprites[i].y = SPRITE_OFFSCREEN_Y;
     }
 
     state = STATE_CREDITS;
     pattern_table = 1;
     credits_msg = 0;
-
-    DisablePPU();
 
     // write palettes
     ppu_addr = PPU_PALETTE;
@@ -518,8 +518,22 @@ void UpdatePlayerSprites() {
             player_sprites[i * 4 + j].tile_index = player_sprite_data[i * 4 + j];
         }
     }
-};
+}
 
+void UpdateFade() {
+    if(FrameCount >= FRAMES_PER_SEC / 2) {
+        FrameCount = 0;
+        ++fade_count;
+        if(fade_count >= 4) {
+            ResetScroll();
+            FadeStep();
+        }
+    }
+
+    if(fade_count == 10) {
+        InitCredits();
+    }
+}
 
 void Update() {
     switch(state) {
@@ -530,18 +544,7 @@ void Update() {
         UpdatePlayerSprites();
         break;
     case STATE_FADE:
-        if(FrameCount == FRAMES_PER_SEC / 2) {
-            FrameCount = 0;
-            ++fade_count;
-            if(fade_count > 2) {
-                ResetScroll();
-                FadeStep();
-            }
-        }
-
-        if(fade_count == 8) {
-            InitCredits();
-        }
+        UpdateFade();
         break;
     default:
         break;
