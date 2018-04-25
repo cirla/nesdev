@@ -1,5 +1,5 @@
 ---
-title: "A Lifetime of HappiNES: Part 1"
+title: "A Lifetime of HappiNES: Title Screen"
 layout: post
 git_branch: wedding
 ---

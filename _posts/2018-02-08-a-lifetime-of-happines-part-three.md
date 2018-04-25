@@ -1,5 +1,5 @@
 ---
-title: "A Lifetime of HappiNES: Part 3"
+title: "A Lifetime of HappiNES: Transitions &amp; States"
 layout: post
 git_branch: wedding
 ---

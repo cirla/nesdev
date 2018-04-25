@@ -1,5 +1,5 @@
 ---
-title: "A Lifetime of HappiNES: Part 4"
+title: "A Lifetime of HappiNES: Sprites, Collisions, Actions"
 layout: post
 git_branch: wedding
 ---
@@ -451,7 +451,26 @@ void PlayerAction() {
 }
 {% endhighlight %}
 
+We can't forget to clean up our sprites so they don't clog up the credits screen:
+
+{% highlight c %}
+void InitCredits() {
+    DisablePPU();
+
+    // hide level sprites
+    for(i = 0; i < 16; i++) {
+        player_sprites[i].y = SPRITE_OFFSCREEN_Y;
+    }
+    for(i = 0; i < 4; i++) {
+        ring_sprites[i].y = SPRITE_OFFSCREEN_Y;
+    }
+
+    ...
+}
+{% endhighlight %}
+
 This sudden transition feels jarring and anti-climactic.
 We only see the bride with her ring for a fraction of a second!
-That's all for now, but next time we'll add a slow fade-to-black before we roll credits.
+
+That's all for now, but [next time]({{ site.baseurl }}{% post_url 2018-04-24-a-lifetime-of-happines-part-five %}) we'll add a slow fade-to-black before we roll credits.
 
