@@ -118,7 +118,7 @@ start:
     ; set the C stack pointer
     lda #<(__STACK_START__ + __STACK_SIZE__)
     sta sp
-    lda #>(__STACK_START__+__STACK_SIZE__)
+    lda #>(__STACK_START__ + __STACK_SIZE__)
     sta sp+1
 
     lda PPU_STATUS ; reset the PPU latch
