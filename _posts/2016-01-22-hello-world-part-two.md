@@ -43,13 +43,17 @@ Defining the memory areas is as simple as defining a start address and a size an
 
 {% highlight text %}
 ZP: start = $00, size = $100;
-RAM: start = $0300, size = $500;
+OAM: start = $0200, size = $100;
+RAM: start = $0300, size = $300;
+STACK: start = __STACK_START__, size = __STACK_SIZE__;
 {% endhighlight %}
 
-The first two areas we create&mdash;`ZP` and `RAM`&mdash;will define sections of the NES CPU RAM, while the rest will define sections of the cartridge ROM chips.
+The first four areas we create&mdash;`ZP`, `OAM`, `RAM`, and `STACK`&mdash;will define sections of the NES CPU RAM, while the rest will define sections of the cartridge ROM chips.
 We're defining `ZP` as an explicit area that represents the zero page we talked about in the last post.
 It starts at memory address `0x0000` and is 256 (`0x100`) bytes in size.
-We're going to skip over the next two pages for now (we'll use one for the C stack and make specific use of the other in later tutorials) and define the remaining five pages (`0x500` or 1280 bytes) as general-purpose RAM.
+We're going to skip over the next two pages for now (page one is used for the 6502 CPU stack and we will make specific use of page two in later tutorials).
+For the remaining five pages (`0x500` or 1280 bytes), we will use three as general-purpose RAM and set aside two for the C stack.
+We will define `__STACK_START__` and `__STACK_SIZE__` below as symbols so that we can reference them in our startup code, mentioned below.
 
 {% highlight text %}
 HEADER: start = $0, size = $10, file = %O, fill = yes;
@@ -135,11 +139,9 @@ Since both of these have uninitialized types (`zp` and `bss`), they are not writ
 All that's left for us to do is tell the linker to export a couple of symbols we'll need to set up the C stack:
 
 {% highlight text %}
-__STACK_START__: type = weak, value = $0100;
-__STACK_SIZE__:  type = weak, value = $100;
+__STACK_START__: type = weak, value = $0600;
+__STACK_SIZE__:  type = weak, value = $200;
 {% endhighlight %}
-
-We're going to have the stack take up the second page of RAM (i.e. the 256 bytes starting at address `0x0100`).
 
 ## Startup Code
 
